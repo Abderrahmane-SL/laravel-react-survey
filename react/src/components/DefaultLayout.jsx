@@ -218,7 +218,6 @@ export default function DefaultLayout() {
                             Profile Settings
                           </NavLink>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Account Settings</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={logout} className="text-red-600">
                           Sign out

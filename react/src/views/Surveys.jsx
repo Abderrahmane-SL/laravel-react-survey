@@ -1,37 +1,50 @@
-"use client"
+"use client";
 
-import { PlusIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline"
-import { useEffect, useState } from "react"
-import axiosClient from "../axios.js"
-import SurveyListItem from "../components/SurveyListItem.jsx"
-import TButton from "../components/core/TButton.jsx"
-import PageComponent from "../components/PageComponent.jsx"
-import PaginationLinks from "../components/PaginationLinks.jsx"
-import { useStateContext } from "../contexts/ContextProvider.jsx"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import styled from "styled-components"
+import { PlusIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
+import axiosClient from "../axios.js";
+import SurveyListItem from "../components/SurveyListItem.jsx";
+import TButton from "../components/core/TButton.jsx";
+import PageComponent from "../components/PageComponent.jsx";
+import PaginationLinks from "../components/PaginationLinks.jsx";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import styled from "styled-components";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useNavigate } from "react-router-dom";
 
 const SurveysContainer = styled.div`
-  space-y: 2rem;
-`
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+`;
 
 const SearchContainer = styled.div`
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
-  
+
   @media (max-width: 640px) {
     flex-direction: column;
   }
-`
+`;
 
 const SearchInput = styled.div`
   position: relative;
   flex: 1;
-  
+
   .search-icon {
     position: absolute;
     left: 0.75rem;
@@ -40,120 +53,139 @@ const SearchInput = styled.div`
     color: hsl(215.4 16.3% 46.9%);
     pointer-events: none;
   }
-  
+
   input {
     padding-left: 2.5rem;
   }
-`
+`;
 
 const SurveysGrid = styled.div`
   display: grid;
   gap: 1.5rem;
-  
+
   @media (min-width: 640px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @media (min-width: 1024px) {
     grid-template-columns: repeat(3, 1fr);
   }
-`
+`;
 
 const EmptyState = styled(Card)`
   text-align: center;
   padding: 3rem 2rem;
   border: 2px dashed hsl(214.3 31.8% 91.4%);
   background-color: hsl(210 40% 98%);
-`
+`;
 
 const LoadingGrid = styled.div`
   display: grid;
   gap: 1.5rem;
-  
+
   @media (min-width: 640px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @media (min-width: 1024px) {
     grid-template-columns: repeat(3, 1fr);
   }
-`
+`;
 
 export default function Surveys() {
-  const { showToast } = useStateContext()
-  const [surveys, setSurveys] = useState([])
-  const [meta, setMeta] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [surveys, setSurveys] = useState([]);
+  const [meta, setMeta] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDelete, setIsDelete] = useState(false);
+  const [surveyIdToDelete, setSurveyIdToDelete] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    getSurveys();
+  }, []);
+
+  function handleDelete() {
+    axiosClient
+      .delete(`/survey/${surveyIdToDelete}`)
+      .then(() => {
+        setSurveys((prev) => prev.filter((s) => s.id !== surveyIdToDelete));
+        toast.success("Survey Deleted", {
+          description:
+            "The survey and all associated data have been permanently removed.",
+        });
+        setIsDelete(false);
+        setSurveyIdToDelete(null);
+      })
+
+      .catch((err) => {
+        console.error(err);
+        toast.error("Delete Failed", {
+          description: "Unable to delete the survey. Please try again later.",
+        });
+      });
+  }
 
   const onDeleteClick = (id) => {
-    if (window.confirm("Are you sure you want to delete this survey? This action cannot be undone.")) {
-      axiosClient
-        .delete(`/survey/${id}`)
-        .then(() => {
-          getSurveys()
-          showToast("Survey deleted successfully. All associated data has been removed.", "success")
-        })
-        .catch((err) => {
-          console.error(err)
-          showToast("Failed to delete survey. Please try again later.", "error")
-        })
-    }
-  }
+    setSurveyIdToDelete(id);
+    setIsDelete(true);
+  };
 
   const onPageClick = (link) => {
-    getSurveys(link.url)
-  }
+    getSurveys(link.url);
+  };
 
   const getSurveys = (url) => {
-    url = url || "/survey"
-    setLoading(true)
+    url = url || "/survey";
+    setLoading(true);
     axiosClient
       .get(url)
       .then(({ data }) => {
-        setSurveys(data.data)
-        setMeta(data.meta)
-        setLoading(false)
+        setSurveys(data.data);
+        setMeta(data.meta);
+        setLoading(false);
       })
       .catch((err) => {
-        console.error(err)
-        setLoading(false)
-        showToast("Failed to load surveys. Please refresh the page.", "error")
-      })
-  }
+        console.error(err);
+        setLoading(false);
+        toast.error("Loading Failed", {
+          description: "Unable to load surveys. Please refresh the page.",
+        });
+      });
+  };
 
   const handleSearch = (ev) => {
-    ev.preventDefault()
+    ev.preventDefault();
     if (searchTerm.trim()) {
-      setLoading(true)
+      setLoading(true);
       axiosClient
         .get(`/survey?search=${encodeURIComponent(searchTerm)}`)
         .then(({ data }) => {
-          setSurveys(data.data)
-          setMeta(data.meta)
-          setLoading(false)
+          setSurveys(data.data);
+          setMeta(data.meta);
+          setLoading(false);
           if (data.data.length === 0) {
-            showToast(`No surveys found for "${searchTerm}"`, "warning")
+            toast.info("No Results", {
+              description: `No surveys found for "${searchTerm}".`,
+            });
           }
         })
         .catch((err) => {
-          console.error(err)
-          setLoading(false)
-          showToast("Search failed. Please try again.", "error")
-        })
+          console.error(err);
+          setLoading(false);
+          toast.error("Search Failed", {
+            description: "Unable to search surveys. Please try again.",
+          });
+        });
     } else {
-      getSurveys()
+      getSurveys();
     }
-  }
+  };
 
   const clearSearch = () => {
-    setSearchTerm("")
-    getSurveys()
-  }
-
-  useEffect(() => {
-    getSurveys()
-  }, [])
+    setSearchTerm("");
+    getSurveys();
+  };
 
   return (
     <PageComponent
@@ -209,7 +241,11 @@ export default function Surveys() {
         {!loading && surveys.length > 0 && (
           <SurveysGrid>
             {surveys.map((survey) => (
-              <SurveyListItem key={survey.id} survey={survey} onDeleteClick={onDeleteClick} />
+              <SurveyListItem
+                key={survey.id}
+                survey={survey}
+                onDeleteClick={onDeleteClick}
+              />
             ))}
           </SurveysGrid>
         )}
@@ -244,8 +280,31 @@ export default function Surveys() {
         )}
 
         {/* Pagination */}
-        {!loading && surveys.length > 0 && <PaginationLinks meta={meta} onPageClick={onPageClick} />}
+        {!loading && surveys.length > 0 && (
+          <PaginationLinks meta={meta} onPageClick={onPageClick} />
+        )}
       </SurveysContainer>
+      <AlertDialog open={isDelete} onOpenChange={setIsDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              survey and remove all associated data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleDelete()}
+              className="bg-red-600 hover:bg-red-700"
+              // disabled={isLoadingAction}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageComponent>
-  )
+  );
 }

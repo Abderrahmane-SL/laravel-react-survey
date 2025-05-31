@@ -1,25 +1,28 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import axiosClient from "../axios.js"
 import PageComponent from "../components/PageComponent"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ChartBarIcon, UsersIcon, CalendarIcon } from "@heroicons/react/24/outline"
+import { ChartBarIcon, UsersIcon, CalendarIcon, ArrowLeftIcon } from "@heroicons/react/24/outline"
+import { toast } from "sonner"
 import styled from "styled-components"
 
 const ResultsContainer = styled.div`
-  space-y: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 `
 
 const StatsGrid = styled.div`
   display: grid;
   gap: 1.5rem;
-  margin-bottom: 2rem;
-  
+  margin-bottom: 1rem;
+  grid-template-columns: repeat(1, 1fr);
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -52,7 +55,7 @@ const StatLabel = styled.div`
 const QuestionCard = styled(Card)`
   background: white;
   border: 1px solid hsl(214.3 31.8% 91.4%);
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 `
 
 const QuestionTitle = styled.h3`
@@ -87,8 +90,29 @@ const LoadingSkeleton = styled.div`
   space-y: 1.5rem;
 `
 
+const NoResultsMessage = styled.div`
+  text-align: center;
+  padding: 3rem 2rem;
+  background-color: hsl(210 40% 98%);
+  border-radius: 0.5rem;
+  border: 1px dashed hsl(214.3 31.8% 91.4%);
+  
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: hsl(222.2 47.4% 11.2%);
+  }
+  
+  p {
+    color: hsl(215.4 16.3% 46.9%);
+    margin-bottom: 1.5rem;
+  }
+`
+
 export default function SurveyResults() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [survey, setSurvey] = useState(null)
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -96,16 +120,27 @@ export default function SurveyResults() {
 
   useEffect(() => {
     if (id) {
-      Promise.all([axiosClient.get(`/survey/${id}`), axiosClient.get(`/survey/${id}/results`)])
-        .then(([surveyResponse, resultsResponse]) => {
-          setSurvey(surveyResponse.data.data)
-          setResults(resultsResponse.data)
+      console.log("Fetching results for survey ID:", id)
+      setLoading(true)
+      axiosClient
+        .get(`/survey/${id}/results`)
+        .then(({ data }) => {
+          console.log("Survey results received:", data)
+          setSurvey(data.survey)
+          setResults(data)
           setLoading(false)
         })
         .catch((err) => {
-          setError("Failed to load survey results")
+          console.error("Error fetching survey results:", err)
+          if (err.response && err.response.status === 404) {
+            setError("Survey not found or you don't have permission to view these results")
+          } else {
+            setError("Failed to load survey results. Please try again.")
+          }
           setLoading(false)
-          console.error(err)
+          toast.error("Loading Failed", {
+            description: "Unable to load survey results. Please try again.",
+          })
         })
     }
   }, [id])
@@ -119,12 +154,16 @@ export default function SurveyResults() {
   }
 
   const getQuestionResults = (questionId) => {
-    if (!results || !results.answers) return []
-    return results.answers.filter((answer) => answer.question_id === questionId)
+    if (!results || !results.results) return []
+    return results.results[questionId] || []
   }
 
   const getAnswerStats = (questionId, questionType) => {
     const answers = getQuestionResults(questionId)
+
+    if (answers.length === 0) {
+      return []
+    }
 
     if (questionType === "text" || questionType === "textarea") {
       return answers.map((answer) => ({
@@ -154,6 +193,10 @@ export default function SurveyResults() {
       .sort((a, b) => b.count - a.count)
   }
 
+  const goBackToSurvey = () => {
+    navigate(`/surveys/${id}`)
+  }
+
   if (loading) {
     return (
       <PageComponent title="Survey Results">
@@ -177,9 +220,13 @@ export default function SurveyResults() {
   if (error) {
     return (
       <PageComponent title="Survey Results">
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+        <button onClick={goBackToSurvey} className="flex items-center gap-2 text-primary hover:underline mt-4">
+          <ArrowLeftIcon className="h-4 w-4" />
+          Back to Survey
+        </button>
       </PageComponent>
     )
   }
@@ -188,7 +235,16 @@ export default function SurveyResults() {
   const completionRate = results?.completion_rate || 0
 
   return (
-    <PageComponent title={`Results: ${survey?.title}`} subtitle="View and analyze survey responses">
+    <PageComponent
+      title={`Results: ${survey?.title || "Survey"}`}
+      subtitle="View and analyze survey responses"
+      buttons={
+        <button onClick={goBackToSurvey} className="flex items-center gap-2 text-primary hover:underline">
+          <ArrowLeftIcon className="h-4 w-4" />
+          Back to Survey
+        </button>
+      }
+    >
       <ResultsContainer>
         {/* Statistics */}
         <StatsGrid>
@@ -229,12 +285,13 @@ export default function SurveyResults() {
             <CardTitle>Survey Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
+            {/* margin-bottom: 1rem; */}
+            <div className="grid gap-4 md:grid-cols-2 mb-4">
               <div>
-                <strong>Created:</strong> {formatDate(survey?.created_at)}
+                <strong>Created:</strong> {survey?.created_at ? formatDate(survey.created_at) : "N/A"}
               </div>
               <div>
-                <strong>Expires:</strong> {formatDate(survey?.expire_date)}
+                <strong>Expires:</strong> {survey?.expire_date ? formatDate(survey.expire_date) : "N/A"}
               </div>
               <div>
                 <strong>Status:</strong>{" "}
@@ -250,37 +307,48 @@ export default function SurveyResults() {
           </CardContent>
         </Card>
 
-        {/* Question Results */}
-        {survey?.questions?.map((question, index) => {
-          const answerStats = getAnswerStats(question.id, question.type)
+        {/* No Results Message */}
+        {totalResponses === 0 && (
+          <NoResultsMessage>
+            <h3>No Responses Yet</h3>
+            <p>
+              This survey hasn't received any responses yet. Check back later or share your survey with more people.
+            </p>
+          </NoResultsMessage>
+        )}
 
-          return (
-            <QuestionCard key={question.id}>
-              <CardHeader>
-                <QuestionTitle>
-                  {index + 1}. {question.question}
-                </QuestionTitle>
-                {question.description && <p className="text-sm text-muted-foreground">{question.description}</p>}
-              </CardHeader>
-              <CardContent>
-                {answerStats.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">No responses yet</p>
-                ) : (
-                  <div className="space-y-2">
-                    {answerStats.map((stat, idx) => (
-                      <AnswerItem key={idx}>
-                        <AnswerText>
-                          {question.type === "text" || question.type === "textarea" ? `"${stat.text}"` : stat.text}
-                        </AnswerText>
-                        <AnswerCount>{stat.count}</AnswerCount>
-                      </AnswerItem>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </QuestionCard>
-          )
-        })}
+        {/* Question Results */}
+        {totalResponses > 0 &&
+          survey?.questions?.map((question, index) => {
+            const answerStats = getAnswerStats(question.id, question.type)
+
+            return (
+              <QuestionCard key={question.id}>
+                <CardHeader>
+                  <QuestionTitle>
+                    {index + 1}. {question.question}
+                  </QuestionTitle>
+                  {question.description && <p className="text-sm text-muted-foreground">{question.description}</p>}
+                </CardHeader>
+                <CardContent>
+                  {answerStats.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No responses for this question</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {answerStats.map((stat, idx) => (
+                        <AnswerItem key={idx}>
+                          <AnswerText>
+                            {question.type === "text" || question.type === "textarea" ? `"${stat.text}"` : stat.text}
+                          </AnswerText>
+                          <AnswerCount>{stat.count}</AnswerCount>
+                        </AnswerItem>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </QuestionCard>
+            )
+          })}
       </ResultsContainer>
     </PageComponent>
   )

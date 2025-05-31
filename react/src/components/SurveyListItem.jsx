@@ -1,6 +1,13 @@
 "use client"
 
-import { ArrowTopRightOnSquareIcon, PencilIcon, TrashIcon, CalendarIcon, EyeIcon } from "@heroicons/react/24/outline"
+import {
+  ArrowTopRightOnSquareIcon,
+  PencilIcon,
+  TrashIcon,
+  CalendarIcon,
+  EyeIcon,
+  ChartBarIcon,
+} from "@heroicons/react/24/outline"
 import { useState } from "react"
 import TButton from "./core/TButton"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -178,7 +185,18 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <TButton href={`/view/survey/${survey.slug}`} size="sm" variant="outline" target="_blank">
+                  <TButton to={`/survey/results/${survey.id}`} size="sm" variant="outline">
+                    <ChartBarIcon className="h-4 w-4" />
+                  </TButton>
+                </TooltipTrigger>
+                <TooltipContent>View Results</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TButton to={`/view/survey/${survey.slug}`} size="sm" variant="outline" target="_blank">
                     <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                   </TButton>
                 </TooltipTrigger>

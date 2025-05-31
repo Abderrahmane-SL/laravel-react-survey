@@ -12,13 +12,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UserIcon } from "@heroicons/react/24/outline"
+import { toast } from "sonner"
 import styled from "styled-components"
+import { StyledForm } from "../components/FormStyles"
 import { CalendarIcon, CameraIcon, EditIcon, MailIcon, SaveIcon, XIcon } from "lucide-react"
 
 const ProfileContainer = styled.div`
   max-width: 48rem;
   margin: 0 auto;
-  space-y: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 `
 
 const ProfileHeader = styled(Card)`
@@ -59,6 +63,8 @@ const AvatarUpload = styled.div`
     inset: 0;
     opacity: 0;
     cursor: pointer;
+    width: 100%;
+    height: 100%;
   }
 `
 
@@ -149,11 +155,13 @@ const InfoItem = styled.div`
 `
 
 const LoadingSkeleton = styled.div`
-  space-y: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 `
 
 export default function Profile() {
-  const { currentUser, setCurrentUser, showToast } = useStateContext()
+  const { currentUser, setCurrentUser } = useStateContext()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -165,6 +173,8 @@ export default function Profile() {
     new_password: "",
     new_password_confirmation: "",
   })
+  // Add state for avatar preview
+  const [avatarPreview, setAvatarPreview] = useState(null)
 
   useEffect(() => {
     fetchUserProfile()
@@ -173,7 +183,7 @@ export default function Profile() {
   const fetchUserProfile = () => {
     setLoading(true)
     axiosClient
-      .get("/me")
+      .get("/user")
       .then(({ data }) => {
         setCurrentUser(data)
         setFormData({
@@ -183,12 +193,17 @@ export default function Profile() {
           new_password: "",
           new_password_confirmation: "",
         })
+        // Reset avatar preview when fetching user data
+        setAvatarPreview(null)
         setLoading(false)
       })
       .catch((err) => {
         console.error(err)
         setError("Failed to load profile information")
         setLoading(false)
+        toast.error("Loading Failed", {
+          description: "Unable to load your profile. Please refresh the page.",
+        })
       })
   }
 
@@ -217,7 +232,7 @@ export default function Profile() {
     }
 
     axiosClient
-      .put("/profile", payload)
+      .put("/user", payload)
       .then(({ data }) => {
         setCurrentUser(data.user)
         setIsEditing(false)
@@ -227,7 +242,9 @@ export default function Profile() {
           new_password: "",
           new_password_confirmation: "",
         })
-        showToast("Profile updated successfully! Your changes have been saved.", "success")
+        toast.success("Profile Updated!", {
+          description: "Your profile information has been saved successfully.",
+        })
       })
       .catch((err) => {
         if (err.response && err.response.data.errors) {
@@ -236,7 +253,9 @@ export default function Profile() {
         } else {
           setError("Failed to update profile. Please try again.")
         }
-        showToast("Failed to update profile. Please check your information and try again.", "error")
+        toast.error("Update Failed", {
+          description: "Unable to save your changes. Please check your information and try again.",
+        })
       })
       .finally(() => {
         setSaving(false)
@@ -253,28 +272,45 @@ export default function Profile() {
       new_password: "",
       new_password_confirmation: "",
     })
+    // Reset avatar preview when canceling
+    setAvatarPreview(null)
   }
 
   const handleAvatarChange = (ev) => {
     const file = ev.target.files[0]
     if (!file) return
 
+    // Create a preview URL for immediate display
+    const previewUrl = URL.createObjectURL(file)
+    setAvatarPreview(previewUrl)
+
     const formData = new FormData()
     formData.append("avatar", file)
 
+    // Show loading toast
+    toast.loading("Uploading profile picture...", { id: "avatar-upload" })
+
     axiosClient
-      .post("/profile/avatar", formData, {
+      .post("/user/avatar", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       })
       .then(({ data }) => {
         setCurrentUser(data.user)
-        showToast("Profile picture updated successfully!", "success")
+        toast.success("Avatar Updated!", {
+          description: "Your profile picture has been updated successfully.",
+          id: "avatar-upload",
+        })
       })
       .catch((err) => {
         console.error(err)
-        showToast("Failed to update profile picture. Please try again.", "error")
+        toast.error("Upload Failed", {
+          description: "Unable to update your profile picture. Please try again.",
+          id: "avatar-upload",
+        })
+        // Reset avatar preview on error
+        setAvatarPreview(null)
       })
   }
 
@@ -328,14 +364,18 @@ export default function Profile() {
           <CardContent className="p-8 text-center">
             <AvatarContainer>
               <Avatar className="w-24 h-24 mx-auto">
-                <AvatarImage src={currentUser.avatar_url || "/placeholder.svg"} alt={currentUser.name} />
+                {/* Use avatarPreview if available, otherwise use currentUser.avatar_url */}
+                <AvatarImage
+                  src={currentUser.avatar_url ?? avatarPreview}
+                  alt={currentUser.name}
+                />
                 <AvatarFallback className="text-lg font-semibold bg-white/20 text-white">
                   {getInitials(currentUser.name)}
                 </AvatarFallback>
               </Avatar>
               <AvatarUpload>
                 <CameraIcon className="h-4 w-4 text-white" />
-                <input type="file" accept="image/*" onChange={handleAvatarChange} />
+                <input type="file" accept="image/*" onChange={handleAvatarChange} aria-label="Upload profile picture" />
               </AvatarUpload>
             </AvatarContainer>
             <UserInfo>
@@ -410,7 +450,7 @@ export default function Profile() {
                 </Alert>
               )}
 
-              <form onSubmit={handleSubmit}>
+              <StyledForm onSubmit={handleSubmit}>
                 <FormGrid>
                   {/* Basic Information */}
                   <div className="space-y-2">
@@ -498,7 +538,7 @@ export default function Profile() {
                     )}
                   </Button>
                 </ActionButtons>
-              </form>
+              </StyledForm>
             </CardContent>
           </InfoCard>
         )}

@@ -8,7 +8,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "sonner"
 import styled from "styled-components"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 const PublicContainer = styled.div`
   min-height: 100vh;
@@ -74,6 +77,14 @@ const LoadingSkeleton = styled.div`
   space-y: 1.5rem;
 `
 
+const EmailInputContainer = styled.div`
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: hsl(210 40% 98%);
+  border-radius: 0.5rem;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+`
+
 export default function SurveyPublicView() {
   const { slug } = useParams()
   const [survey, setSurvey] = useState(null)
@@ -82,6 +93,7 @@ export default function SurveyPublicView() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState("")
+  const [participantEmail, setParticipantEmail] = useState("")
 
   const answerChanged = (question, value) => {
     setAnswers((prev) => ({
@@ -96,23 +108,31 @@ export default function SurveyPublicView() {
     setError("")
 
     const payload = {
-      survey_id: survey.id,
       answers: Object.keys(answers).map((questionId) => ({
-        question_id: questionId,
+        question_id: Number.parseInt(questionId),
         answer: answers[questionId],
       })),
+      participant_email: participantEmail || null,
     }
 
     axiosClient
       .post(`/survey/${survey.id}/answer`, payload)
       .then(() => {
         setSubmitted(true)
-        // Note: This would need a different toast system for public pages
-        // or we could show a success message in the UI directly
+        toast.success("Survey Submitted!", {
+          description: "Thank you for your participation. Your response has been recorded.",
+        })
       })
       .catch((err) => {
-        setError("Failed to submit survey. Please check your answers and try again.")
-        console.error(err)
+        console.error("Survey submission error:", err)
+        if (err.response && err.response.data && err.response.data.message) {
+          setError(err.response.data.message)
+        } else {
+          setError("Failed to submit survey. Please check your answers and try again.")
+        }
+        toast.error("Submission Failed", {
+          description: "Unable to submit your response. Please try again.",
+        })
       })
       .finally(() => {
         setSubmitting(false)
@@ -120,16 +140,25 @@ export default function SurveyPublicView() {
   }
 
   useEffect(() => {
+    // Make sure we're using the correct API endpoint
+    const apiUrl = `/survey/get-by-slug/${slug}`
+    console.log("Fetching survey with slug:", slug, "from URL:", apiUrl)
+
+    setLoading(true)
     axiosClient
-      .get(`/survey/get-by-slug/${slug}`)
+      .get(apiUrl)
       .then(({ data }) => {
+        console.log("Survey data received:", data)
         setSurvey(data.data)
         setLoading(false)
       })
       .catch((err) => {
+        console.error("Error fetching survey:", err)
         setError("Survey not found or no longer available")
         setLoading(false)
-        console.error(err)
+        toast.error("Survey Not Found", {
+          description: "This survey may have expired or been removed.",
+        })
       })
   }, [slug])
 
@@ -185,16 +214,31 @@ export default function SurveyPublicView() {
     <PublicContainer>
       <SurveyContainer>
         <SurveyHeader>
-          {survey.image_url && <SurveyImage src={survey.image_url} alt={survey.title} />}
+          {survey?.image_url && <SurveyImage src={survey.image_url} alt={survey.title} />}
           <CardHeader>
-            <SurveyTitle>{survey.title}</SurveyTitle>
-            {survey.description && <SurveyDescription dangerouslySetInnerHTML={{ __html: survey.description }} />}
+            <SurveyTitle>{survey?.title}</SurveyTitle>
+            {survey?.description && <SurveyDescription dangerouslySetInnerHTML={{ __html: survey.description }} />}
           </CardHeader>
         </SurveyHeader>
 
         <form onSubmit={onSubmit}>
+          <EmailInputContainer>
+            <Label htmlFor="participant_email">Your Email (Optional)</Label>
+            <Input
+              id="participant_email"
+              type="email"
+              value={participantEmail}
+              onChange={(e) => setParticipantEmail(e.target.value)}
+              placeholder="Enter your email address"
+              className="mt-2"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              Providing your email is optional. It helps us identify your response if needed.
+            </p>
+          </EmailInputContainer>
+
           <QuestionsContainer>
-            {survey.questions.map((question, index) => (
+            {survey?.questions?.map((question, index) => (
               <PublicQuestionView
                 key={question.id}
                 question={question}

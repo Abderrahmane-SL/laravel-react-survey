@@ -1,37 +1,52 @@
-"use client"
+"use client";
 
-import { LinkIcon, PhotoIcon, TrashIcon, CalendarIcon } from "@heroicons/react/24/outline"
-import { useState, useEffect } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import TButton from "../components/core/TButton"
-import PageComponent from "../components/PageComponent"
-import SurveyQuestions from "../components/SurveyQuestions"
-import axiosClient from "../axios.js"
-import { useStateContext } from "../contexts/ContextProvider"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import styled from "styled-components"
-import { ImageIcon } from "lucide-react"
+import {
+  LinkIcon,
+  PhotoIcon,
+  TrashIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import TButton from "../components/core/TButton";
+import PageComponent from "../components/PageComponent";
+import SurveyQuestions from "../components/SurveyQuestions";
+import axiosClient from "../axios.js";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import styled from "styled-components";
+import { ImageIcon } from "lucide-react";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const FormContainer = styled(Card)`
   background: white;
   border: 1px solid hsl(214.3 31.8% 91.4%);
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
-`
+`;
 
 const ImageUploadContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-bottom: 1.5rem;
-`
+`;
 
 const ImagePreview = styled.div`
   width: 8rem;
@@ -45,18 +60,18 @@ const ImagePreview = styled.div`
   background-color: hsl(210 40% 98%);
   position: relative;
   transition: all 0.2s ease;
-  
+
   &:hover {
     border-color: hsl(218.2 39.3% 57.1%);
     background-color: hsl(218.2 39.3% 57.1% / 0.05);
   }
-  
+
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-`
+`;
 
 const FileInput = styled.input`
   position: absolute;
@@ -66,22 +81,22 @@ const FileInput = styled.input`
   bottom: 0;
   opacity: 0;
   cursor: pointer;
-`
+`;
 
 const FormGrid = styled.div`
   display: grid;
   gap: 1.5rem;
-  
+
   @media (min-width: 768px) {
     grid-template-columns: 1fr 1fr;
   }
-`
+`;
 
 const FullWidthField = styled.div`
   @media (min-width: 768px) {
     grid-column: 1 / -1;
   }
-`
+`;
 
 const CheckboxContainer = styled.div`
   display: flex;
@@ -92,21 +107,22 @@ const CheckboxContainer = styled.div`
   border-radius: 0.5rem;
   background-color: hsl(210 40% 98%);
   transition: all 0.2s ease;
-  
+
   &:hover {
     border-color: hsl(213.3 31.8% 83.2%);
     background-color: white;
   }
-`
+`;
 
 const LoadingSkeleton = styled.div`
-  space-y: 1.5rem;
-`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
 
 export default function SurveyView() {
-  const { showToast } = useStateContext()
-  const navigate = useNavigate()
-  const { id } = useParams()
+  const navigate = useNavigate();
+  const { id } = useParams();
 
   const [survey, setSurvey] = useState({
     title: "",
@@ -117,111 +133,139 @@ export default function SurveyView() {
     image_url: null,
     expire_date: "",
     questions: [],
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [isDelete, setIsDelete] = useState(false);
 
   const onImageChoose = (ev) => {
-    const file = ev.target.files[0]
-    if (!file) return
+    const file = ev.target.files[0];
+    if (!file) return;
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = () => {
       setSurvey({
         ...survey,
         image: file,
         image_url: reader.result,
-      })
-      ev.target.value = ""
-    }
-    reader.readAsDataURL(file)
-  }
+      });
+      ev.target.value = "";
+    };
+    reader.readAsDataURL(file);
+  };
 
   const onSubmit = (ev) => {
-    ev.preventDefault()
-    setError("")
+    ev.preventDefault();
+    setError("");
+    setSaving(true);
 
-    const payload = { ...survey }
+    const payload = { ...survey };
     if (payload.image) {
-      payload.image = payload.image_url
+      payload.image = payload.image_url;
     }
-    delete payload.image_url
+    delete payload.image_url;
 
-    let res = null
+    let res = null;
     if (id) {
-      res = axiosClient.put(`/survey/${id}`, payload)
+      res = axiosClient.put(`/survey/${id}`, payload);
     } else {
-      res = axiosClient.post("/survey", payload)
+      res = axiosClient.post("/survey", payload);
     }
 
     res
       .then((res) => {
-        navigate("/surveys")
+        navigate("/surveys");
         if (id) {
-          showToast("The survey was updated successfully")
+          toast.success("Survey Updated!", {
+            description: "Your survey has been updated successfully.",
+          });
         } else {
-          showToast("The survey was created successfully")
+          toast.success("Survey Created!", {
+            description:
+              "Your survey has been created and is ready to collect responses.",
+          });
         }
       })
       .catch((err) => {
         if (err && err.response) {
-          setError(err.response.data.message || "An error occurred")
+          setError(err.response.data.message || "An error occurred");
+          toast.error("Failed to Save Survey", {
+            description: "Please check your input and try again.",
+          });
         }
-        console.error(err)
+        console.error(err);
       })
-  }
+      .finally(() => {
+        setSaving(false);
+      });
+  };
 
   function onQuestionsUpdate(questions) {
     setSurvey({
       ...survey,
       questions,
-    })
+    });
   }
+
+  const handleDelete = () => {
+    if (!id) return;
+    axiosClient
+      .delete(`/survey/${id}`)
+      .then(() => {
+        navigate("/surveys");
+        toast.success("Survey Deleted", {
+          description:
+            "The survey and all associated data have been permanently removed.",
+        });
+        setIsDelete(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("Delete Failed", {
+          description: "Unable to delete the survey. Please try again later.",
+        });
+      });
+  };
 
   const onDelete = () => {
-    if (!id) return
-
-    if (window.confirm("Are you sure you want to delete this survey?")) {
-      axiosClient
-        .delete(`/survey/${id}`)
-        .then(() => {
-          navigate("/surveys")
-          showToast("Survey deleted successfully")
-        })
-        .catch((err) => {
-          console.error(err)
-          showToast("Failed to delete survey")
-        })
-    }
-  }
+    setIsDelete(true);
+  };
 
   useEffect(() => {
     if (id) {
-      setLoading(true)
+      setLoading(true);
       axiosClient
         .get(`/survey/${id}`)
         .then(({ data }) => {
-          setSurvey(data.data)
-          setLoading(false)
+          setSurvey(data.data);
+          setLoading(false);
         })
         .catch((err) => {
-          console.error(err)
-          setLoading(false)
-          setError("Failed to load survey")
-        })
+          console.error(err);
+          setLoading(false);
+          setError("Failed to load survey");
+          toast.error("Loading Failed", {
+            description: "Unable to load survey data. Please refresh the page.",
+          });
+        });
     }
-  }, [id])
+  }, [id]);
 
   return (
     <PageComponent
       title={!id ? "Create New Survey" : "Update Survey"}
-      subtitle={!id ? "Design and configure your survey" : "Modify your survey settings and questions"}
+      subtitle={
+        !id
+          ? "Design and configure your survey"
+          : "Modify your survey settings and questions"
+      }
       buttons={
         id && (
           <div className="flex gap-2">
             <TButton
               variant="outline"
-              href={`/survey/public/${survey.slug}`}
+              to={`/survey/public/${survey.slug}`}
               target="_blank"
               className="flex items-center gap-2"
             >
@@ -265,7 +309,7 @@ export default function SurveyView() {
             </CardHeader>
             <CardContent className="space-y-6">
               {error && (
-                <Alert variant="destructive">
+                <Alert className="mb-4 bg-[#ffffff] text-destructive">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
@@ -276,17 +320,26 @@ export default function SurveyView() {
                 <ImageUploadContainer>
                   <ImagePreview>
                     {survey.image_url ? (
-                      <img src={survey.image_url || "/placeholder.svg"} alt="Survey" />
+                      <img
+                        src={survey.image_url || "/placeholder.svg"}
+                        alt="Survey"
+                      />
                     ) : (
                       <PhotoIcon className="h-8 w-8 text-muted-foreground" />
                     )}
-                    <FileInput type="file" accept="image/*" onChange={onImageChoose} />
+                    <FileInput
+                      type="file"
+                      accept="image/*"
+                      onChange={onImageChoose}
+                    />
                   </ImagePreview>
                   <div>
                     <Button type="button" variant="outline" size="sm">
                       {survey.image_url ? "Change Image" : "Upload Image"}
                     </Button>
-                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 2MB</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PNG, JPG up to 2MB
+                    </p>
                   </div>
                 </ImageUploadContainer>
               </div>
@@ -299,7 +352,9 @@ export default function SurveyView() {
                     id="title"
                     type="text"
                     value={survey.title}
-                    onChange={(ev) => setSurvey({ ...survey, title: ev.target.value })}
+                    onChange={(ev) =>
+                      setSurvey({ ...survey, title: ev.target.value })
+                    }
                     placeholder="Enter survey title"
                     required
                   />
@@ -313,7 +368,9 @@ export default function SurveyView() {
                       id="expire_date"
                       type="date"
                       value={survey.expire_date}
-                      onChange={(ev) => setSurvey({ ...survey, expire_date: ev.target.value })}
+                      onChange={(ev) =>
+                        setSurvey({ ...survey, expire_date: ev.target.value })
+                      }
                       required
                     />
                     <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -327,7 +384,9 @@ export default function SurveyView() {
                     <Textarea
                       id="description"
                       value={survey.description || ""}
-                      onChange={(ev) => setSurvey({ ...survey, description: ev.target.value })}
+                      onChange={(ev) =>
+                        setSurvey({ ...survey, description: ev.target.value })
+                      }
                       placeholder="Describe your survey purpose and instructions"
                       rows={4}
                     />
@@ -340,13 +399,20 @@ export default function SurveyView() {
                     <Checkbox
                       id="status"
                       checked={survey.status}
-                      onCheckedChange={(checked) => setSurvey({ ...survey, status: checked })}
+                      onCheckedChange={(checked) =>
+                        setSurvey({ ...survey, status: checked })
+                      }
                     />
                     <div className="space-y-1">
-                      <Label htmlFor="status" className="text-sm font-medium cursor-pointer">
+                      <Label
+                        htmlFor="status"
+                        className="text-sm font-medium cursor-pointer"
+                      >
                         Active Survey
                       </Label>
-                      <p className="text-xs text-muted-foreground">Make this survey publicly available for responses</p>
+                      <p className="text-xs text-muted-foreground">
+                        Make this survey publicly available for responses
+                      </p>
                     </div>
                   </CheckboxContainer>
                 </FullWidthField>
@@ -355,19 +421,56 @@ export default function SurveyView() {
           </FormContainer>
 
           {/* Questions Section */}
-          <SurveyQuestions questions={survey.questions} onQuestionsUpdate={onQuestionsUpdate} />
+          <SurveyQuestions
+            questions={survey.questions}
+            onQuestionsUpdate={onQuestionsUpdate}
+          />
 
           {/* Submit Button */}
           <div className="flex justify-end gap-3 mt-6">
-            <Button type="button" variant="outline" onClick={() => navigate("/surveys")}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/surveys")}
+            >
               Cancel
             </Button>
-            <Button type="submit" className="min-w-[120px]">
-              {id ? "Update Survey" : "Create Survey"}
+            <Button type="submit" className="min-w-[120px]" disabled={saving}>
+              {saving ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {id ? "Updating..." : "Creating..."}
+                </div>
+              ) : id ? (
+                "Update Survey"
+              ) : (
+                "Create Survey"
+              )}
             </Button>
           </div>
         </form>
       )}
+      <AlertDialog open={isDelete} onOpenChange={setIsDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              survey and remove all associated data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+              // disabled={isLoadingAction}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageComponent>
-  )
+  );
 }

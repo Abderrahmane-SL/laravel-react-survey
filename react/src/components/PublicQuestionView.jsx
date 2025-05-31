@@ -65,7 +65,7 @@ const OptionsContainer = styled.div`
 
 const CheckboxOption = styled.div`
   display: flex;
-  align-items: center;
+  items-center;
   gap: 0.5rem;
   padding: 0.5rem;
   border-radius: 0.375rem;
@@ -78,7 +78,7 @@ const CheckboxOption = styled.div`
 
 const RadioOption = styled.div`
   display: flex;
-  align-items: center;
+  items-center;
   gap: 0.5rem;
   padding: 0.5rem;
   border-radius: 0.375rem;
