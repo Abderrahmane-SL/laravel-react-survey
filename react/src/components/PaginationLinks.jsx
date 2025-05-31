@@ -1,67 +1,173 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
+"use client"
+
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid"
+import { Button } from "@/components/ui/button"
+import styled from "styled-components"
+
+const PaginationContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid hsl(214.3 31.8% 91.4%);
+  background-color: white;
+  padding: 1rem 1.5rem;
+  margin-top: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  
+  @media (max-width: 640px) {
+    padding: 0.75rem 1rem;
+  }
+`
+
+const ResultsText = styled.p`
+  font-size: 0.875rem;
+  color: hsl(215.4 16.3% 46.9%);
+  margin: 0;
+  
+  .font-medium {
+    font-weight: 600;
+    color: hsl(222.2 47.4% 11.2%);
+  }
+`
+
+const MobilePaginationContainer = styled.div`
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  
+  @media (min-width: 640px) {
+    display: none;
+  }
+`
+
+const DesktopPaginationContainer = styled.div`
+  display: none;
+  
+  @media (min-width: 640px) {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+  }
+`
+
+const StyledPaginationLink = styled.button`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background-color: white;
+  color: hsl(215.4 16.3% 46.9%);
+  
+  &:hover {
+    background-color: hsl(210 40% 96.1%);
+    border-color: hsl(213.3 31.8% 83.2%);
+  }
+  
+  &:focus {
+    z-index: 20;
+    outline: none;
+    ring: 2px;
+    ring-color: hsl(218.2 39.3% 57.1%);
+  }
+  
+  &.active {
+    z-index: 10;
+    background-color: hsl(218.2 39.3% 57.1%);
+    border-color: hsl(218.2 39.3% 57.1%);
+    color: white;
+  }
+  
+  &.first {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+  }
+  
+  &.last {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`
 
 export default function PaginationLinks({ meta, onPageClick }) {
-
   function onClick(ev, link) {
-    ev.preventDefault();
+    ev.preventDefault()
     if (!link.url) {
-      return;
+      return
     }
     onPageClick(link)
   }
 
+  if (!meta || !meta.links) {
+    return null
+  }
+
+  const prevLink = meta.links[0]
+  const nextLink = meta.links[meta.links.length - 1]
+
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 shadow-md mt-4">
-      <div className="flex flex-1 justify-between sm:hidden">
-        <a
-          href="#"
-          onClick={ev => onClick(ev, meta.links[0])}
-          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+    <PaginationContainer>
+      {/* Mobile Pagination */}
+      <MobilePaginationContainer>
+        <Button
+          variant="outline"
+          onClick={(ev) => onClick(ev, prevLink)}
+          disabled={!prevLink.url}
+          className="flex items-center gap-2"
         >
+          <ChevronLeftIcon className="h-4 w-4" />
           Previous
-        </a>
-        <a
-          href="#"
-          onClick={ev => onClick(ev, meta.links[meta.links.length - 1])}
-          className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        </Button>
+        <Button
+          variant="outline"
+          onClick={(ev) => onClick(ev, nextLink)}
+          disabled={!nextLink.url}
+          className="flex items-center gap-2"
         >
           Next
-        </a>
-      </div>
-      <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+          <ChevronRightIcon className="h-4 w-4" />
+        </Button>
+      </MobilePaginationContainer>
+
+      {/* Desktop Pagination */}
+      <DesktopPaginationContainer>
         <div>
-          <p className="text-sm text-gray-700">
-            Showing <span className="font-medium">{meta.from}</span> to{" "}
-            <span className="font-medium">{meta.to}</span> of &nbsp;
-            <span className="font-medium">{meta.total}</span> results
-          </p>
+          <ResultsText>
+            Showing <span className="font-medium">{meta.from}</span> to <span className="font-medium">{meta.to}</span>{" "}
+            of <span className="font-medium">{meta.total}</span> results
+          </ResultsText>
         </div>
+
         <div>
-          {meta.total > meta.per_page && <nav
-            className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-            aria-label="Pagination"
-          >
-            {/* Current: "z-10 bg-indigo-50 border-indigo-500 text-indigo-600", Default: "bg-white border-gray-300 text-gray-500 hover:bg-gray-50" */}
-            {meta.links && meta.links.map((link, ind) => (
-              <a
-                href="#"
-                onClick={ev => onClick(ev, link)}
-                key={ind}
-                aria-current="page"
-                className={
-                  "relative z-10 inline-flex items-center border   px-4 py-2 text-sm font-medium focus:z-20 hover:bg-gray-50 "
-                  + (ind === 0 ? 'rounded-l-md ' : '')
-                  + (ind === meta.links.length - 1 ? 'rounded-r-md ' : '')
-                  + (link.active ? 'border-indigo-500 bg-indigo-50 text-indigo-600 ' : '')
-                }
-                dangerouslySetInnerHTML={{ __html: link.label }}
-              >
-              </a>
-            ))}
-          </nav>
-          }
+          {meta.total > meta.per_page && (
+            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+              {meta.links.map((link, ind) => (
+                <StyledPaginationLink
+                  key={ind}
+                  onClick={(ev) => onClick(ev, link)}
+                  disabled={!link.url}
+                  className={`
+                    ${ind === 0 ? "first" : ""}
+                    ${ind === meta.links.length - 1 ? "last" : ""}
+                    ${link.active ? "active" : ""}
+                  `}
+                  dangerouslySetInnerHTML={{ __html: link.label }}
+                />
+              ))}
+            </nav>
+          )}
         </div>
-      </div>
-    </div>
-  );
+      </DesktopPaginationContainer>
+    </PaginationContainer>
+  )
 }

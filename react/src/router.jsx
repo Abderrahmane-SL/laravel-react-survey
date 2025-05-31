@@ -1,12 +1,14 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
-import DefaultLayout from "./components/DefaultLayout";
-import GuestLayout from "./components/GuestLayout";
-import Dashboard from "./views/Dashboard";
-import Login from "./views/Login";
-import Signup from "./views/Signup";
-import SurveyPublicView from "./views/SurveyPublicView";
-import Surveys from "./views/Surveys";
-import SurveyView from "./views/SurveyView";
+import { createBrowserRouter, Navigate } from "react-router-dom"
+import Dashboard from "./views/Dashboard.jsx"
+import Surveys from "./views/Surveys.jsx"
+import Login from "./views/Login.jsx"
+import Signup from "./views/Signup.jsx"
+import Profile from "./views/Profile.jsx"
+import GuestLayout from "./components/GuestLayout.jsx"
+import DefaultLayout from "./components/DefaultLayout.jsx"
+import SurveyView from "./views/SurveyView.jsx"
+import SurveyPublicView from "./views/SurveyPublicView.jsx"
+import SurveyResults from "./views/SurveyResults.jsx"
 
 const router = createBrowserRouter([
   {
@@ -14,11 +16,11 @@ const router = createBrowserRouter([
     element: <DefaultLayout />,
     children: [
       {
-        path: '/dashboard',
-        element: <Navigate to="/" />
+        path: "/",
+        element: <Navigate to="/dashboard" />,
       },
       {
-        path: "/",
+        path: "/dashboard",
         element: <Dashboard />,
       },
       {
@@ -32,6 +34,14 @@ const router = createBrowserRouter([
       {
         path: "/surveys/:id",
         element: <SurveyView />,
+      },
+      {
+        path: "/survey/results/:id",
+        element: <SurveyResults />,
+      },
+      {
+        path: "/profile",
+        element: <Profile />,
       },
     ],
   },
@@ -53,6 +63,10 @@ const router = createBrowserRouter([
     path: "/survey/public/:slug",
     element: <SurveyPublicView />,
   },
-]);
+  {
+    path: "/view/survey/:slug",
+    element: <SurveyPublicView />,
+  },
+])
 
-export default router;
+export default router

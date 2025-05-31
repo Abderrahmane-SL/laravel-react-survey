@@ -1,28 +1,98 @@
-import { Link } from "react-router-dom";
-import { LockClosedIcon } from "@heroicons/react/20/solid";
-import { useState } from "react";
-import axiosClient from '../axios.js'
-import { useStateContext } from "../contexts/ContextProvider.jsx";
+"use client"
+
+import { Link } from "react-router-dom"
+import { LockClosedIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
+import { useState } from "react"
+import axiosClient from "../axios.js"
+import { useStateContext } from "../contexts/ContextProvider.jsx"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import styled from "styled-components"
+
+const SignupContainer = styled.div`
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+`
+
+const SignupCard = styled(Card)`
+  background: white;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+`
+
+const PasswordInputWrapper = styled.div`
+  position: relative;
+  
+  .password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: hsl(215.4 16.3% 46.9%);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      color: hsl(222.2 47.4% 11.2%);
+    }
+  }
+`
+
+const FormGrid = styled.div`
+  display: grid;
+  gap: 1rem;
+`
+
+const LinkText = styled(Link)`
+  color: hsl(218.2 39.3% 57.1%);
+  font-weight: 500;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`
 
 export default function Signup() {
-  const { setCurrentUser, setUserToken } = useStateContext();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [error, setError] = useState({ __html: "" });
+  const { setCurrentUser, setUserToken } = useStateContext()
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    passwordConfirmation: "",
+  })
+  const [showPassword, setShowPassword] = useState(false)
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false)
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
 
   const onSubmit = (ev) => {
-    ev.preventDefault();
-    setError({ __html: "" });
-
+    ev.preventDefault()
+    setError("")
+    setLoading(true)
 
     axiosClient
       .post("/signup", {
-        name: fullName,
-        email,
-        password,
-        password_confirmation: passwordConfirmation,
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        password_confirmation: formData.passwordConfirmation,
       })
       .then(({ data }) => {
         setCurrentUser(data.user)
@@ -31,119 +101,120 @@ export default function Signup() {
       .catch((error) => {
         if (error.response) {
           const finalErrors = Object.values(error.response.data.errors).reduce((accum, next) => [...accum, ...next], [])
-          console.log(finalErrors)
-          setError({__html: finalErrors.join('<br>')})
+          setError(finalErrors.join(". "))
+        } else {
+          setError("An unexpected error occurred. Please try again.")
         }
-        console.error(error)
-      });
-  };
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }
 
   return (
-    <>
-      <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-        Signup for free
-      </h2>
-      <p className="mt-2 text-center text-sm text-gray-600">
-        Or{" "}
-        <Link
-          to="/login"
-          className="font-medium text-indigo-600 hover:text-indigo-500"
-        >
-          Login with your account
-        </Link>
-      </p>
+    <SignupContainer>
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Create Your Account</h2>
+        <p className="text-sm text-muted-foreground">Join us to start creating amazing surveys</p>
+      </div>
 
-      {error.__html && (<div className="bg-red-500 rounded py-2 px-3 text-white" dangerouslySetInnerHTML={error}>
-      </div>)}
+      <SignupCard>
+        <CardContent className="p-6">
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-      <form
-        onSubmit={onSubmit}
-        className="mt-8 space-y-6"
-        action="#"
-        method="POST"
-      >
-        <input type="hidden" name="remember" defaultValue="true" />
-        <div className="-space-y-px rounded-md shadow-sm">
-          <div>
-            <label htmlFor="full-name" className="sr-only">
-              Full Name
-            </label>
-            <input
-              id="full-name"
-              name="name"
-              type="text"
-              required
-              value={fullName}
-              onChange={ev => setFullName(ev.target.value)}
-              className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-              placeholder="Full Name"
-            />
-          </div>
-          <div>
-            <label htmlFor="email-address" className="sr-only">
-              Email address
-            </label>
-            <input
-              id="email-address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={ev => setEmail(ev.target.value)}
-              className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-              placeholder="Email address"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="sr-only">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={ev => setPassword(ev.target.value)}
-              className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-              placeholder="Password"
-            />
-          </div>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <FormGrid>
+              {/* Full Name */}
+              <div className="space-y-2">
+                <Label htmlFor="full-name">Full Name *</Label>
+                <Input
+                  id="full-name"
+                  type="text"
+                  value={formData.fullName}
+                  onChange={(ev) => handleInputChange("fullName", ev.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
 
-          <div>
-            <label htmlFor="password-confirmation" className="sr-only">
-              Password Confirmation
-            </label>
-            <input
-              id="password-confirmation"
-              name="password_confirmation"
-              type="password"
-              required
-              value={passwordConfirmation}
-              onChange={ev => setPasswordConfirmation(ev.target.value)}
-              className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-              placeholder="Password Confirmation"
-            />
-          </div>
-        </div>
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(ev) => handleInputChange("email", ev.target.value)}
+                  placeholder="Enter your email address"
+                  required
+                />
+              </div>
 
-        <div>
-          <button
-            type="submit"
-            className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-              <LockClosedIcon
-                className="h-5 w-5 text-indigo-500 group-hover:text-indigo-400"
-                aria-hidden="true"
-              />
-            </span>
-            Signup
-          </button>
-        </div>
-      </form>
-    </>
-  );
+              {/* Password */}
+              <div className="space-y-2">
+                <Label htmlFor="password">Password *</Label>
+                <PasswordInputWrapper>
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(ev) => handleInputChange("password", ev.target.value)}
+                    placeholder="Create a strong password"
+                    required
+                  />
+                  <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  </button>
+                </PasswordInputWrapper>
+              </div>
+
+              {/* Password Confirmation */}
+              <div className="space-y-2">
+                <Label htmlFor="password-confirmation">Confirm Password *</Label>
+                <PasswordInputWrapper>
+                  <Input
+                    id="password-confirmation"
+                    type={showPasswordConfirmation ? "text" : "password"}
+                    value={formData.passwordConfirmation}
+                    onChange={(ev) => handleInputChange("passwordConfirmation", ev.target.value)}
+                    placeholder="Confirm your password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+                  >
+                    {showPasswordConfirmation ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  </button>
+                </PasswordInputWrapper>
+              </div>
+            </FormGrid>
+
+            <Button type="submit" className="w-full mt-6" disabled={loading}>
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Creating Account...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <LockClosedIcon className="h-4 w-4" />
+                  Create Account
+                </div>
+              )}
+            </Button>
+          </form>
+
+          <div className="text-center mt-6 text-sm text-muted-foreground">
+            Already have an account? <LinkText to="/login">Sign in here</LinkText>
+          </div>
+        </CardContent>
+      </SignupCard>
+    </SignupContainer>
+  )
 }
