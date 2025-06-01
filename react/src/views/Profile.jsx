@@ -1,42 +1,152 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useStateContext } from "../contexts/ContextProvider"
-import PageComponent from "../components/PageComponent"
-import axiosClient from "../axios.js"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import { UserIcon } from "@heroicons/react/24/outline"
-import { toast } from "sonner"
-import styled from "styled-components"
-import { StyledForm } from "../components/FormStyles"
-import { CalendarIcon, CameraIcon, EditIcon, MailIcon, SaveIcon, XIcon } from "lucide-react"
+import { useState, useEffect } from "react";
+import { useStateContext } from "../contexts/ContextProvider";
+import PageComponent from "../components/PageComponent";
+import axiosClient from "../axios.js";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { UserIcon } from "@heroicons/react/24/outline";
+import { toast } from "sonner";
+import styled from "styled-components";
 
+//
+// Inline SVG icons (we removed the old Heroicons imports for them)
+//
+const EditIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M15.232 5.232l3.536 3.536M9 11l-6 6v3h3l6-6M18.364 2.636a2.5 2.5 0 113.536 3.536l-12 12a2 2 0 01-1.414.586H6v-2.121a2 2 0 01.586-1.415l12-12z"
+    />
+  </svg>
+);
+
+const MailIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"
+    />
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M8 7V3M16 7V3M4 11h16M4 19h16M4 15h16M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
+    />
+  </svg>
+);
+
+const CameraIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-4 w-4 text-white"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 8l1.34-2.68A2 2 0 016.09 4h11.82a2 2 0 011.75 1.32L21 8m-9 4a4 4 0 110-8 4 4 0 010 8zm8 8H5a2 2 0 01-2-2V8h18v10a2 2 0 01-2 2z"
+    />
+  </svg>
+);
+
+const XIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-4 w-4 mr-2"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M6 18L18 6M6 6l12 12"
+    />
+  </svg>
+);
+
+const SaveIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-4 w-4"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M5 13l4 4L19 7M5 5h14v14H5z"
+    />
+  </svg>
+);
+
+//
+// Styled components
+//
 const ProfileContainer = styled.div`
   max-width: 48rem;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-`
+`;
 
 const ProfileHeader = styled(Card)`
-  background: linear-gradient(135deg, hsl(222.2 47.4% 11.2%) 0%, hsl(224.4 47.4% 15.6%) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(222.2 47.4% 11.2%) 0%,
+    hsl(224.4 47.4% 15.6%) 100%
+  );
   color: white;
   border: none;
   margin-bottom: 2rem;
-`
+`;
 
 const AvatarContainer = styled.div`
   position: relative;
   display: inline-block;
   margin-bottom: 1rem;
-`
+`;
 
 const AvatarUpload = styled.div`
   position: absolute;
@@ -52,12 +162,12 @@ const AvatarUpload = styled.div`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: hsl(218.2 39.3% 47.1%);
     transform: scale(1.1);
   }
-  
+
   input {
     position: absolute;
     inset: 0;
@@ -66,59 +176,60 @@ const AvatarUpload = styled.div`
     width: 100%;
     height: 100%;
   }
-`
+`;
 
 const UserInfo = styled.div`
   text-align: center;
-  
+
   h1 {
     font-size: 1.875rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
   }
-  
+
   p {
     opacity: 0.9;
     font-size: 1rem;
   }
-`
+`;
 
 const InfoCard = styled(Card)`
   background: white;
   border: 1px solid hsl(214.3 31.8% 91.4%);
   transition: all 0.2s ease;
-  
+
   &:hover {
     border-color: hsl(213.3 31.8% 83.2%);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -2px rgba(0, 0, 0, 0.1);
   }
-`
+`;
 
 const FormGrid = styled.div`
   display: grid;
   gap: 1.5rem;
-  
+
   @media (min-width: 768px) {
     grid-template-columns: 1fr 1fr;
   }
-`
+`;
 
 const FullWidthField = styled.div`
   @media (min-width: 768px) {
     grid-column: 1 / -1;
   }
-`
+`;
 
 const ActionButtons = styled.div`
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
   margin-top: 1.5rem;
-  
+
   @media (max-width: 640px) {
     flex-direction: column;
   }
-`
+`;
 
 const InfoItem = styled.div`
   display: flex;
@@ -128,15 +239,15 @@ const InfoItem = styled.div`
   border: 1px solid hsl(214.3 31.8% 91.4%);
   border-radius: 0.5rem;
   background-color: hsl(210 40% 98%);
-  
+
   .icon {
     color: hsl(218.2 39.3% 57.1%);
     flex-shrink: 0;
   }
-  
+
   .content {
     flex: 1;
-    
+
     .label {
       font-size: 0.75rem;
       font-weight: 600;
@@ -145,193 +256,198 @@ const InfoItem = styled.div`
       letter-spacing: 0.05em;
       margin-bottom: 0.25rem;
     }
-    
+
     .value {
       font-size: 0.875rem;
       font-weight: 500;
       color: hsl(222.2 47.4% 11.2%);
     }
   }
-`
+`;
 
 const LoadingSkeleton = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-`
+`;
 
 export default function Profile() {
-  const { currentUser, setCurrentUser } = useStateContext()
-  const [isEditing, setIsEditing] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState("")
+  const { currentUser, setCurrentUser } = useStateContext();
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     current_password: "",
     new_password: "",
     new_password_confirmation: "",
-  })
-  // Add state for avatar preview
-  const [avatarPreview, setAvatarPreview] = useState(null)
+  });
 
   useEffect(() => {
-    fetchUserProfile()
-  }, [])
+    fetchUserProfile();
+  }, []);
 
-  const fetchUserProfile = () => {
-    setLoading(true)
+  function fetchUserProfile() {
+    setLoading(true);
     axiosClient
       .get("/user")
       .then(({ data }) => {
-        setCurrentUser(data)
+        console.log("Fetched user data:", data);
+
+        setCurrentUser(data);
         setFormData({
           name: data.name || "",
           email: data.email || "",
           current_password: "",
           new_password: "",
           new_password_confirmation: "",
-        })
+        });
         // Reset avatar preview when fetching user data
-        setAvatarPreview(null)
-        setLoading(false)
+        setLoading(false);
       })
       .catch((err) => {
-        console.error(err)
-        setError("Failed to load profile information")
-        setLoading(false)
+        console.error("Error fetching /user:", err);
+        setError("Failed to load profile information", err.message);
+        setLoading(false);
         toast.error("Loading Failed", {
           description: "Unable to load your profile. Please refresh the page.",
-        })
-      })
+        });
+      });
   }
 
-  const handleInputChange = (field, value) => {
+  function handleInputChange(field, value) {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }))
+    }));
   }
 
-  const handleSubmit = (ev) => {
-    ev.preventDefault()
-    setError("")
-    setSaving(true)
+  function handleSubmit(ev) {
+    ev.preventDefault();
+    setError("");
+    setSaving(true);
 
-    // Prepare payload - only include password fields if new password is provided
     const payload = {
       name: formData.name,
       email: formData.email,
-    }
+    };
 
     if (formData.new_password) {
-      payload.current_password = formData.current_password
-      payload.new_password = formData.new_password
-      payload.new_password_confirmation = formData.new_password_confirmation
+      payload.current_password = formData.current_password;
+      payload.new_password = formData.new_password;
+      payload.new_password_confirmation = formData.new_password_confirmation;
     }
 
     axiosClient
       .put("/user", payload)
       .then(({ data }) => {
-        setCurrentUser(data.user)
-        setIsEditing(false)
-        setFormData({
-          ...formData,
+        // data.user is the updated user object
+        setCurrentUser(data.user);
+        setIsEditing(false);
+        setFormData((prev) => ({
+          ...prev,
           current_password: "",
           new_password: "",
           new_password_confirmation: "",
-        })
+        }));
         toast.success("Profile Updated!", {
           description: "Your profile information has been saved successfully.",
-        })
+        });
       })
       .catch((err) => {
+        console.error("Error updating profile:", err);
         if (err.response && err.response.data.errors) {
-          const errors = Object.values(err.response.data.errors).flat()
-          setError(errors.join(". "))
+          const errs = Object.values(err.response.data.errors).flat();
+          setError(errs.join(". "));
         } else {
-          setError("Failed to update profile. Please try again.")
+          setError("Failed to update profile. Please try again.");
         }
         toast.error("Update Failed", {
-          description: "Unable to save your changes. Please check your information and try again.",
-        })
+          description:
+            "Unable to save your changes. Please check your information and try again.",
+        });
       })
       .finally(() => {
-        setSaving(false)
-      })
+        toast.success("Profile Updated!", {
+          description: "salat.",
+        });
+        setSaving(false);
+      });
   }
 
-  const handleCancel = () => {
-    setIsEditing(false)
-    setError("")
-    setFormData({
-      name: currentUser.name || "",
-      email: currentUser.email || "",
-      current_password: "",
-      new_password: "",
-      new_password_confirmation: "",
-    })
-    // Reset avatar preview when canceling
-    setAvatarPreview(null)
+  function handleCancel() {
+    setIsEditing(false);
+    setError("");
+    if (currentUser) {
+      setFormData({
+        name: currentUser.name || "",
+        email: currentUser.email || "",
+        current_password: "",
+        new_password: "",
+        new_password_confirmation: "",
+      });
+    }
   }
 
-  const handleAvatarChange = (ev) => {
-    const file = ev.target.files[0]
-    if (!file) return
+  function handleAvatarChange(ev) {
+    const file = ev.target.files?.[0];
+    if (!file) return;
 
-    // Create a preview URL for immediate display
-    const previewUrl = URL.createObjectURL(file)
-    setAvatarPreview(previewUrl)
+    // 1) Build a FormData for upload
+    const uploadData = new FormData();
+    uploadData.append("avatar", file);
 
-    const formData = new FormData()
-    formData.append("avatar", file)
-
-    // Show loading toast
-    toast.loading("Uploading profile picture...", { id: "avatar-upload" })
+    // Show a loading toast
+    const loadingToast = toast.loading("Uploading profile picture...");
 
     axiosClient
-      .post("/user/avatar", formData, {
+      .post("/user/avatar", uploadData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       })
       .then(({ data }) => {
-        setCurrentUser(data.user)
+        // data.user contains the updated user object with new avatar_url
+        setCurrentUser(data.user);
         toast.success("Avatar Updated!", {
           description: "Your profile picture has been updated successfully.",
-          id: "avatar-upload",
-        })
+        });
       })
       .catch((err) => {
-        console.error(err)
+        console.error("Error uploading avatar:", err);
         toast.error("Upload Failed", {
-          description: "Unable to update your profile picture. Please try again.",
-          id: "avatar-upload",
-        })
-        // Reset avatar preview on error
-        setAvatarPreview(null)
+          description:
+            "Unable to update your profile picture. Please try again.",
+        });
       })
+      .finally(() => {
+        toast.dismiss(loadingToast);
+      });
   }
 
-  const getInitials = (name) => {
-    if (!name) return "U"
+  function getInitials(name) {
+    if (!name) return "U";
     return name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
-      .slice(0, 2)
+      .slice(0, 2);
   }
 
-  const formatDate = (dateString) => {
+  function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
-    })
+    });
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // While loading, show skeletons
+  // ───────────────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <PageComponent title="Profile">
@@ -342,50 +458,81 @@ export default function Profile() {
           </LoadingSkeleton>
         </ProfileContainer>
       </PageComponent>
-    )
+    );
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // If there was an error AND currentUser is still null/undefined, show an alert
+  // ───────────────────────────────────────────────────────────────────────────
+  if (error && !currentUser) {
+    return (
+      <PageComponent title="Profile">
+        <ProfileContainer>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </ProfileContainer>
+      </PageComponent>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Main render: Profile header + either view mode or edit mode
+  // ───────────────────────────────────────────────────────────────────────────
   return (
     <PageComponent
       title="My Profile"
       subtitle="Manage your account settings and personal information"
       buttons={
-        !isEditing && (
-          <Button onClick={() => setIsEditing(true)} className="flex items-center gap-2">
-            <EditIcon className="h-4 w-4" />
+        !isEditing &&
+        currentUser && (
+          <Button
+            onClick={() => setIsEditing(true)}
+            className="flex items-center gap-2"
+          >
+            <EditIcon />
             Edit Profile
           </Button>
         )
       }
     >
       <ProfileContainer>
-        {/* Profile Header */}
+        {/* ─────────── Profile Header ─────────── */}
         <ProfileHeader>
           <CardContent className="p-8 text-center">
             <AvatarContainer>
               <Avatar className="w-24 h-24 mx-auto">
-                {/* Use avatarPreview if available, otherwise use currentUser.avatar_url */}
                 <AvatarImage
-                  src={currentUser.avatar_url ?? avatarPreview}
-                  alt={currentUser.name}
+                  src={
+                    currentUser.avatar_url &&
+                    "http://localhost:8000/storage/" + currentUser.avatar_url
+                  }
+                  alt={currentUser?.name}
+                  className="object-cover w-full h-full"
                 />
                 <AvatarFallback className="text-lg font-semibold bg-white/20 text-white">
-                  {getInitials(currentUser.name)}
+                  {getInitials(currentUser?.name)}
                 </AvatarFallback>
               </Avatar>
               <AvatarUpload>
-                <CameraIcon className="h-4 w-4 text-white" />
-                <input type="file" accept="image/*" onChange={handleAvatarChange} aria-label="Upload profile picture" />
+                <CameraIcon />
+                <input
+                  type="file"
+                  accept="image/*"
+                  name="avatar"
+                  onChange={handleAvatarChange}
+                  aria-label="Upload profile picture"
+                />
               </AvatarUpload>
             </AvatarContainer>
             <UserInfo>
-              <h1>{currentUser.name}</h1>
-              <p>{currentUser.email}</p>
+              <h1>{currentUser?.name}</h1>
+              <p>{currentUser?.email}</p>
             </UserInfo>
           </CardContent>
         </ProfileHeader>
 
-        {/* Profile Information */}
+        {/* ─────────── Profile Information or Edit Form ─────────── */}
         {!isEditing ? (
           <InfoCard>
             <CardHeader>
@@ -400,7 +547,9 @@ export default function Profile() {
                   <UserIcon className="h-5 w-5 icon" />
                   <div className="content">
                     <div className="label">Full Name</div>
-                    <div className="value">{currentUser.name || "Not provided"}</div>
+                    <div className="value">
+                      {currentUser?.name || "Not provided"}
+                    </div>
                   </div>
                 </InfoItem>
 
@@ -408,7 +557,9 @@ export default function Profile() {
                   <MailIcon className="h-5 w-5 icon" />
                   <div className="content">
                     <div className="label">Email Address</div>
-                    <div className="value">{currentUser.email || "Not provided"}</div>
+                    <div className="value">
+                      {currentUser?.email || "Not provided"}
+                    </div>
                   </div>
                 </InfoItem>
 
@@ -417,7 +568,9 @@ export default function Profile() {
                   <div className="content">
                     <div className="label">Member Since</div>
                     <div className="value">
-                      {currentUser.created_at ? formatDate(currentUser.created_at) : "Unknown"}
+                      {currentUser?.created_at
+                        ? formatDate(currentUser.created_at)
+                        : "Unknown"}
                     </div>
                   </div>
                 </InfoItem>
@@ -427,7 +580,9 @@ export default function Profile() {
                   <div className="content">
                     <div className="label">Last Updated</div>
                     <div className="value">
-                      {currentUser.updated_at ? formatDate(currentUser.updated_at) : "Unknown"}
+                      {currentUser?.updated_at
+                        ? formatDate(currentUser.updated_at)
+                        : "Unknown"}
                     </div>
                   </div>
                 </InfoItem>
@@ -435,7 +590,6 @@ export default function Profile() {
             </CardContent>
           </InfoCard>
         ) : (
-          /* Edit Profile Form */
           <InfoCard>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -450,45 +604,59 @@ export default function Profile() {
                 </Alert>
               )}
 
-              <StyledForm onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit}>
                 <FormGrid>
-                  {/* Basic Information */}
+                  {/* Full Name */}
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name *</Label>
                     <Input
                       id="name"
                       type="text"
                       value={formData.name}
-                      onChange={(ev) => handleInputChange("name", ev.target.value)}
+                      onChange={(ev) =>
+                        handleInputChange("name", ev.target.value)
+                      }
                       placeholder="Enter your full name"
                       required
                     />
                   </div>
 
+                  {/* Email */}
                   <div className="space-y-2">
                     <Label htmlFor="email">Email Address *</Label>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(ev) => handleInputChange("email", ev.target.value)}
+                      onChange={(ev) =>
+                        handleInputChange("email", ev.target.value)
+                      }
                       placeholder="Enter your email address"
                       required
                     />
                   </div>
 
-                  {/* Password Change Section */}
+                  {/* Change Password Section */}
                   <FullWidthField>
                     <div className="border-t pt-6 mt-6">
-                      <h3 className="text-lg font-semibold mb-4">Change Password (Optional)</h3>
+                      <h3 className="text-lg font-semibold mb-4">
+                        Change Password (Optional)
+                      </h3>
                       <div className="grid gap-4 md:grid-cols-3">
                         <div className="space-y-2">
-                          <Label htmlFor="current_password">Current Password</Label>
+                          <Label htmlFor="current_password">
+                            Current Password
+                          </Label>
                           <Input
                             id="current_password"
                             type="password"
                             value={formData.current_password}
-                            onChange={(ev) => handleInputChange("current_password", ev.target.value)}
+                            onChange={(ev) =>
+                              handleInputChange(
+                                "current_password",
+                                ev.target.value
+                              )
+                            }
                             placeholder="Enter current password"
                           />
                         </div>
@@ -499,18 +667,27 @@ export default function Profile() {
                             id="new_password"
                             type="password"
                             value={formData.new_password}
-                            onChange={(ev) => handleInputChange("new_password", ev.target.value)}
+                            onChange={(ev) =>
+                              handleInputChange("new_password", ev.target.value)
+                            }
                             placeholder="Enter new password"
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="new_password_confirmation">Confirm New Password</Label>
+                          <Label htmlFor="new_password_confirmation">
+                            Confirm New Password
+                          </Label>
                           <Input
                             id="new_password_confirmation"
                             type="password"
                             value={formData.new_password_confirmation}
-                            onChange={(ev) => handleInputChange("new_password_confirmation", ev.target.value)}
+                            onChange={(ev) =>
+                              handleInputChange(
+                                "new_password_confirmation",
+                                ev.target.value
+                              )
+                            }
                             placeholder="Confirm new password"
                           />
                         </div>
@@ -520,29 +697,39 @@ export default function Profile() {
                 </FormGrid>
 
                 <ActionButtons>
-                  <Button type="button" variant="outline" onClick={handleCancel} disabled={saving}>
-                    <XIcon className="h-4 w-4 mr-2" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancel}
+                    disabled={saving}
+                    className="flex items-center gap-2"
+                  >
+                    <XIcon />
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={saving}>
+                  <Button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2"
+                  >
                     {saving ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         Saving...
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <SaveIcon className="h-4 w-4" />
+                      <>
+                        <SaveIcon />
                         Save Changes
-                      </div>
+                      </>
                     )}
                   </Button>
                 </ActionButtons>
-              </StyledForm>
+              </form>
             </CardContent>
           </InfoCard>
         )}
       </ProfileContainer>
     </PageComponent>
-  )
+  );
 }

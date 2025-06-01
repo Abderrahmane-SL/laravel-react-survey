@@ -8,10 +8,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { toast } from "sonner"
-import styled from "styled-components"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
+import styled from "styled-components"
 
 const PublicContainer = styled.div`
   min-height: 100vh;
@@ -56,7 +56,9 @@ const SurveyDescription = styled.div`
 `
 
 const QuestionsContainer = styled.div`
-  space-y: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 `
 
 const SubmitContainer = styled(Card)`
@@ -74,7 +76,9 @@ const ThankYouCard = styled(Card)`
 `
 
 const LoadingSkeleton = styled.div`
-  space-y: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 `
 
 const EmailInputContainer = styled.div`
@@ -140,15 +144,16 @@ export default function SurveyPublicView() {
   }
 
   useEffect(() => {
-    // Make sure we're using the correct API endpoint
-    const apiUrl = `/survey/get-by-slug/${slug}`
-    console.log("Fetching survey with slug:", slug, "from URL:", apiUrl)
+    if (!slug) {
+      setError("Survey not found")
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     axiosClient
-      .get(apiUrl)
+      .get(`/survey/get-by-slug/${slug}`)
       .then(({ data }) => {
-        console.log("Survey data received:", data)
         setSurvey(data.data)
         setLoading(false)
       })

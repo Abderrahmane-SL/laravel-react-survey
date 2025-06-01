@@ -87,6 +87,7 @@ export default function Dashboard() {
     axiosClient
       .get(`/dashboard`)
       .then((res) => {
+        console.log(res.data);
         setLoading(false);
         setData(res.data);
         return res;
