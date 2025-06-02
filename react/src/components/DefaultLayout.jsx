@@ -41,6 +41,7 @@ const Logo = styled.img`
   height: 6rem;
   width: 6rem;
   transition: transform 0.2s ease;
+  border-radius: 50%;
   
   &:hover {
     transform: scale(1.05);
@@ -180,7 +181,7 @@ export default function DefaultLayout() {
               <div className="flex h-16 items-center justify-between">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <Logo src="logo.png" alt="Surveys App" />
+                    <Logo src="logo.png"  />
                   </div>
                   <div className="hidden md:block">
                     <div className="ml-10 flex items-baseline space-x-2">
