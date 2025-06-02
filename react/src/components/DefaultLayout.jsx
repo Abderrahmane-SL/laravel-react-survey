@@ -41,14 +41,23 @@ const NavigationBar = styled.nav`
 `;
 
 const Logo = styled.img`
-  height: 2rem;
-  width: 2rem;
-  transition: transform 0.2s ease;
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 9999px; /* fully circular */
+  object-fit: cover;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
     transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  @media (max-width: 640px) {
+    height: 2rem;
+    width: 2rem;
   }
 `;
+
 
 const NavItem = styled(NavLink)`
   display: flex;
@@ -183,9 +192,9 @@ export default function DefaultLayout() {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex h-16 items-center justify-between">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 ">
                     <Logo
-                      src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500"
+                      src="logo.png"
                       alt="Surveys App"
                     />
                   </div>
@@ -209,13 +218,6 @@ export default function DefaultLayout() {
 
                 <div className="hidden md:block">
                   <div className="ml-4 flex items-center md:ml-6 gap-3">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-white hover:bg-white/10"
-                    >
-                      <BellIcon className="h-5 w-5" />
-                    </Button>
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -309,8 +311,10 @@ export default function DefaultLayout() {
                   <div className="email">{currentUser.email}</div>
                 </UserDetails>
                 <Button variant="ghost" size="icon">
-                  <BellIcon className="h-5 w-5" />
                 </Button>
+                <NavLink to="/profile" className="w-full">
+                            Profile Settings
+                </NavLink>
               </UserInfo>
 
               <div className="mt-3 space-y-1 px-2 pb-3">

@@ -19,7 +19,9 @@ const GuestContainer = styled.div`
 const ContentWrapper = styled.div`
   width: 100%;
   max-width: 28rem;
-  space-y: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 `
 
 const LogoContainer = styled.div`
@@ -31,12 +33,20 @@ const Logo = styled.img`
   height: 3rem;
   width: auto;
   margin: 0 auto;
-  transition: transform 0.3s ease;
-  
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
   &:hover {
     transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  }
+
+  @media (max-width: 640px) {
+    height: 2.5rem;
   }
 `
+
 
 const StyledCard = styled(Card)`
   background: white;
@@ -85,7 +95,7 @@ export default function GuestLayout() {
     <GuestContainer>
       <ContentWrapper>
         <LogoContainer>
-          <Logo src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600" alt="Surveys App" />
+          <Logo src="logodark.png" alt="Surveys App" />
           <BrandText>
             <h1>Surveys App</h1>
             <p>Create and manage surveys with ease</p>
