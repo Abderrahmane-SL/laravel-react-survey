@@ -1,14 +1,20 @@
 import styled from "styled-components"
 
 const PageContainer = styled.div`
-  background-color: hsl(210 40% 98%);
+  background-color: hsl(var(--background));
   min-height: calc(100vh - 4rem);
+  transition: background-color 0.3s ease;
 `
 
 const PageHeader = styled.header`
-  background: white;
-  border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
+  background: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  
+  .dark & {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  }
 `
 
 const HeaderContent = styled.div`
@@ -37,7 +43,7 @@ const HeaderContent = styled.div`
 const PageTitle = styled.h1`
   font-size: 1.875rem;
   font-weight: 700;
-  color: hsl(222.2 47.4% 11.2%);
+  color: hsl(var(--foreground));
   margin: 0;
   line-height: 1.2;
   
@@ -48,7 +54,7 @@ const PageTitle = styled.h1`
 
 const PageSubtitle = styled.p`
   font-size: 1rem;
-  color: hsl(215.4 16.3% 46.9%);
+  color: hsl(var(--muted-foreground));
   margin: 0.5rem 0 0 0;
   line-height: 1.4;
 `

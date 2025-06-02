@@ -371,7 +371,7 @@ export default function Profile() {
       })
       .finally(() => {
         toast.success("Profile Updated!", {
-          description: "salat.",
+          description: "Your profile information has been updated successfully.",
         });
         setSaving(false);
       });
